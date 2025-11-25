@@ -14,6 +14,8 @@ void addRoom();
 void updateRoom();
 void lockRoom();
 void showRoom(struct Room rooms[], int count);
+void searchRoom(struct Room rooms[] , int size);
+void roomArrangement(struct Room rooms[], int size);
 int main() {
 	int choice;
 	do{
@@ -38,8 +40,11 @@ int main() {
 				showRoom(rooms,size);
 				break;
 			case 5:
+				searchRoom(rooms,size);
 				break;
 			case 6:
+				roomArrangement(rooms,size);
+				system("cls");
 				break;
 			case 7:
 				break;
@@ -81,19 +86,30 @@ void printfMenu(){
 //Them phong moi
 void addRoom(){
 	struct Room room1;
-	printf("Moi ban nhap so phong : ");
-	fgets(room1.roomId , sizeof(room1.roomId) , stdin);
-	room1.roomId[strcspn(room1.roomId , "\n")] = '\0';
-	if(strlen(room1.roomId) == 0){
-		printf("Loi: So phong khong duoc de trong!\n");
-		return;
-	}
-	for(int i = 0 ; i < size ; i++){
-		if(strcmp(rooms[i].roomId , room1.roomId) == 0){
-			printf("Loi: Phong da ton tai!\n");
-			return;
+	do{
+		printf("Moi ban nhap so phong : ");
+		fgets(room1.roomId , sizeof(room1.roomId) , stdin);
+		room1.roomId[strcspn(room1.roomId , "\n")] = '\0';
+		if(strlen(room1.roomId) == 0){
+			printf("Loi: So phong khong duoc de trong!\n");
+		}		
+	}while(strlen(room1.roomId) == 0);
+	int isDuplicate;
+	do{
+		isDuplicate = 0;
+		for(int i = 0 ; i < size ; i++){
+			if(strcmp(rooms[i].roomId , room1.roomId) == 0){
+				printf("Loi: Phong da ton tai!\n");
+				isDuplicate = 1;
+				break;
+			}
 		}
-	}
+		if(isDuplicate){
+			printf("Moi ban nhap so phong : ");
+			fgets(room1.roomId, sizeof(room1.roomId), stdin);
+			room1.roomId[strcspn(room1.roomId, "\n")] = '\0';
+		}			
+	}while(isDuplicate == 1);	
 	do{
 		printf("Moi ban nhap loai phong (1.Phong don , 2.Phong doi) : ");
 		scanf("%d",&room1.type);
@@ -172,7 +188,7 @@ void lockRoom(){
 		printf("Loi: Khong tim thay phong\n");
 		return;
 	}
-	if(rooms[found].status != 1){
+	if(rooms[found].status == 1){
 		printf("Phong dang co khach , khong the dua vao bao tri!\n");
 		return;
 	}
@@ -195,16 +211,14 @@ void showRoom(struct Room rooms[], int size){
 	}
 	int page = 0;
 	int pageSize = 10;
-	int sumPage = size / pageSize;
-	int totalPage;
-	if(size % pageSize == 0){
-		totalPage = size / pageSize;
-	}else{
-		totalPage = size / pageSize + 1;
-	}
+	int totalPage = (size + pageSize - 1) / pageSize;	
 	while(1){
 		printf("Moi ban chon so trang can xem : ");
 		scanf("%d",&page);
+		if(page < 1 || page > totalPage){
+			printf("Trang khong hop le\n");
+			continue;
+		}
 		int start = (page - 1) * pageSize;
 		int end = start + pageSize;
 		printf("Trang %d/%d : \n\n",page,totalPage);
@@ -212,27 +226,16 @@ void showRoom(struct Room rooms[], int size){
 		printf("|%-10s|%-12s|%-10s|%-10s|\n", "So Phong", "Loai Phong", "Gia tien", "Trang thai");
 		printf("+----------+------------+----------+----------+\n");
 		for(int i = start ; i < end && i < size ; i++){
-			char *statusStr;
-			switch(rooms[i].status){
-				case 0:
-					statusStr = "Trong";
-					break;
-				case 1:
-					statusStr = "Dang o";
-					break;
-				case 2:
-					statusStr = "Bao tri";
-					break;								
-			}
-			char *typeStr;
+			int statusNumber = rooms[i].status;
+			char roomType[10];
 			if (rooms[i].type == 1) {				
-    			typeStr = "Don";
+    			strcpy(roomType, "Don");
 			} else if (rooms[i].type == 2) {
-    			typeStr = "Doi";
+    			strcpy(roomType, "Doi");
 			} else {
-    			typeStr = "Khong xac dinh";
+    			strcpy(roomType, "Khong xac dinh");
 			}
-			printf("|%-10s|%-12s|%-10lf|%-10s|\n", rooms[i].roomId, typeStr, rooms[i].price, statusStr);
+			printf("|%-10s|%-12s|%-10.2lf|%-10d|\n", rooms[i].roomId, roomType, rooms[i].price, statusNumber);
 		}
 		printf("+----------+------------+----------+----------+\n");
 		while (getchar() != '\n');
@@ -247,3 +250,66 @@ void showRoom(struct Room rooms[], int size){
 
 
 
+
+//Tim kiem phong trong theo loai
+void searchRoom(struct Room rooms[] , int size){
+	if(size == 0){
+		printf("Danh sach phong trong , moi ban nhap lai");
+		return;
+	}
+	int type;
+	do{
+		printf("Moi ban nhap loai phong (1.Phong don , 2.Phong doi) : ");
+		scanf("%d",&type);
+		if(type != 1 && type != 2){
+			printf("Loi: Loai phong chi duoc chon 1(Don) hoac 2(Doi)!\n");			
+		}
+	}while(type != 1 && type != 2);
+	printf("Cac phong trong thuoc loai %d :\n",type);
+	printf("|%-10s|%-12s|%-10s|%-10s|\n", "So Phong", "Loai Phong", "Gia tien", "Trang thai");
+	int found = 0;
+	for(int i = 0 ; i < size ; i++){
+		if(rooms[i].type == type && rooms[i].status == 0){
+			char roomType[10];
+			if(rooms[i].type == 1){
+				strcpy(roomType,"Don");
+			}else{
+				strcpy(roomType,"Doi");
+			}
+			printf("|%-10s|%-12s|%-10.2lf|Trong     |\n",
+				rooms[i].roomId,
+				roomType,
+				rooms[i].price);
+			found = 1;
+		}
+	}
+	if(!found){
+		printf("Khong co phong trong nao thuoc loai %d\n",type);
+	}
+	
+}
+
+
+
+
+
+
+
+//Sap xep danh sach phong theo gia giam dan
+void roomArrangement(struct Room rooms[], int size){
+	if(size == 0){
+		printf("Danh sach phong trong , khong can sap xep\n");
+		return;
+	}
+	for(int i = 0 ; i < size ; i++){
+		for(int j = i + 1 ; j < size ; j++){
+			if(rooms[i].price < rooms[j].price){
+				struct Room temp = rooms[i];
+				rooms[i] = rooms[j];
+				rooms[j] = temp;
+			}
+		}
+	}
+	printf("Da sap xep danh sach phong theo gia giam dan thanh cong\n");
+	showRoom(rooms,size);	
+}
